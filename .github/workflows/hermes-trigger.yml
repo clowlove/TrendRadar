@@ -1,0 +1,43 @@
+name: Hermes Cron Trigger
+
+on:
+  workflow_dispatch:
+    inputs:
+      notify:
+        description: "Send Telegram notification on run"
+        required: false
+        default: "true"
+        type: boolean
+
+jobs:
+  trigger:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
+
+      - name: Install deps
+        run: uv sync --frozen --no-dev
+
+      - name: Run crawler
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          FEISHU_WEBHOOK_URL: ${{ secrets.FEISHU_WEBHOOK_URL }}
+          DINGTALK_WEBHOOK_URL: ${{ secrets.DINGTALK_WEBHOOK_URL }}
+          AI_API_KEY: ${{ secrets.AI_API_KEY }}
+          AI_API_BASE: ${{ secrets.AI_API_BASE }}
+        run: |
+          echo "🤖 TrendRadar crawler triggered by Hermes"
+          echo "Time: $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
+          uv run python -m trendradar
